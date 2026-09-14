@@ -7,7 +7,7 @@ import type {
   import type { ProviderRegistry } from '../container'
   import { selectSources } from '../source-selection'
   import { selectProvider } from '../provider-selection'
-  
+  import { normalizeResults } from '../normalization'
   export async function retrieveResults(
     intent: QueryIntent,
     providers: ProviderRegistry,
@@ -43,7 +43,7 @@ import type {
   
     return {
       success: results.length > 0 || errors.length === 0,
-      data: results,
+      data: normalizeResults(results),
       error,
       metadata: {
         provider: 'intelligence-retrieval',
