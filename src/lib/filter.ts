@@ -22,8 +22,10 @@ export function filterActivities(
 
     if (
       requiredPreferences.length > 0 &&
-      !requiredPreferences.some((preference) =>
-        activity.tags.includes(preference),
+      !requiredPreferences.some(
+        (preference) =>
+          activity.tags.includes(preference) ||
+          activity.category.toLowerCase() === preference,
       )
     ) {
       return false
