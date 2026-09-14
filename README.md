@@ -1,75 +1,97 @@
-# React + TypeScript + Vite
+# Milestone 1 — Intelligent Discovery Prototype
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A prototype recommendation app that converts a natural-language activity request into ranked local recommendations.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The app accepts requests such as:
 
-## React Compiler
+> I have R300 and want something fun to do with my girlfriend Saturday.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+It then:
 
-## Expanding the ESLint configuration
+1. Parses the request into structured search criteria.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+2. Retrieves activity data from Supabase.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+3. Applies hard filters such as budget, location, and explicit activity type.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+4. Scores eligible activities using a deterministic rule-based recommendation engine.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+5. Ranks the results.
 
-```
+6. Displays the top 5 recommendations.
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+7. Explains why each recommendation was selected.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+8. Persists the search session and selected results in Supabase.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Technology
 
-```
+- React
+
+- TypeScript
+
+- Vite
+
+- Supabase
+
+- PostgreSQL
+
+- Git / GitHub
+
+## Architecture
+
+```text
+
+Natural-language query
+
+        |
+
+        v
+
+   Search parser
+
+        |
+
+        v
+
+ Structured search criteria
+
+        |
+
+        v
+
+ Supabase activities + tags
+
+        |
+
+        v
+
+     Hard filters
+
+        |
+
+        v
+
+   Rule-based scoring
+
+        |
+
+        v
+
+     Ranked results
+
+        |
+
+        v
+
+      Top 5 UI
+
+        |
+
+        +----> search_sessions
+
+        |
+
+        +----> search_results
