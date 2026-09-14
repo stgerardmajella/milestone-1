@@ -8,6 +8,7 @@ import type {
   import { selectSources } from '../source-selection'
   import { selectProvider } from '../provider-selection'
   import { normalizeResults } from '../normalization'
+  import { verifier } from '../verification'
   export async function retrieveResults(
     intent: QueryIntent,
     providers: ProviderRegistry,
@@ -41,9 +42,12 @@ import type {
         ? errors[0]
         : null
   
-    return {
-      success: results.length > 0 || errors.length === 0,
-      data: normalizeResults(results),
+        const normalizedResults = normalizeResults(results)
+        const verifiedResults = verifier.verify(normalizedResults)
+        
+        return {
+          success: results.length > 0 || errors.length === 0,
+          data: verifiedResults,
       error,
       metadata: {
         provider: 'intelligence-retrieval',
