@@ -1,15 +1,10 @@
-import type {
-  EventProvider,
-  PlaceProvider,
-  SearchProvider,
-} from '../contracts'
 import type { ProviderRegistry } from '../container'
+import type { QueryIntent, ProviderResult, SearchResult } from '../contracts'
 import type { SourceType } from '../source-selection'
 
-export type SelectedProvider =
-  | EventProvider
-  | PlaceProvider
-  | SearchProvider
+export type SelectedProvider = (
+  intent: QueryIntent,
+) => Promise<ProviderResult<SearchResult>>
 
 export function selectProvider(
   source: SourceType,
@@ -17,12 +12,12 @@ export function selectProvider(
 ): SelectedProvider {
   switch (source) {
     case 'events':
-      return providers.events
+      return (intent) => providers.events.searchEvents(intent)
 
     case 'places':
-      return providers.places
+      return (intent) => providers.places.searchPlaces(intent)
 
     case 'web':
-      return providers.search
+      return (intent) => providers.search.search(intent)
   }
 }
