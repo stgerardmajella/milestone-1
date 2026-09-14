@@ -9,7 +9,23 @@ const DAY_NAMES = [
   'friday',
   'saturday',
 ]
-
+const SUPPORTED_LOCATIONS = [
+    'Cape Town',
+    'Johannesburg',
+    'Durban',
+    'Pretoria',
+  ]
+  function extractLocation(query: string): string {
+    const lowerQuery = query.toLowerCase()
+  
+    for (const location of SUPPORTED_LOCATIONS) {
+      if (lowerQuery.includes(location.toLowerCase())) {
+        return location
+      }
+    }
+  
+    return 'Cape Town'
+  }
 function extractBudget(query: string): number | null {
   const match = query.match(/r\s?(\d+(?:[.,]\d+)?)/i)
 
@@ -131,9 +147,9 @@ function extractPreferences(query: string): string[] {
 }
 
 export function parseSearchQuery(query: string): ParsedSearch {
-  return {
-    intent: 'activity',
-    location: 'Cape Town',
+    return {
+      intent: 'activity',
+      location: extractLocation(query),
     budget: extractBudget(query),
     people: extractPeople(query),
     date: extractDate(query),

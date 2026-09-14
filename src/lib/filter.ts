@@ -9,6 +9,7 @@ const HARD_FILTER_PREFERENCES = [
 export function filterActivities(
   activities: Activity[],
   budget: number | null,
+  location: string | null,
   preferences: string[],
 ): Activity[] {
   const requiredPreferences = preferences.filter((preference) =>
@@ -21,11 +22,18 @@ export function filterActivities(
     }
 
     if (
+      location !== null &&
+      activity.location.toLowerCase() !== location.toLowerCase()
+    ) {
+      return false
+    }
+
+    if (
       requiredPreferences.length > 0 &&
       !requiredPreferences.some(
         (preference) =>
           activity.tags.includes(preference) ||
-          activity.category.toLowerCase() === preference,
+          activity.category.toLowerCase() === preference.toLowerCase(),
       )
     ) {
       return false
