@@ -70,6 +70,8 @@ function App() {
 
     const parsedSearch = parseSearchQuery(query)
 
+  
+
     const eligibleActivities = filterActivities(
       activities,
       parsedSearch.budget,
