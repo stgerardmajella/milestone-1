@@ -1,11 +1,31 @@
 import type { Activity } from '../types/recommendation'
 
+const HARD_FILTER_PREFERENCES = [
+  'food',
+  'music',
+  'adventure',
+]
+
 export function filterActivities(
   activities: Activity[],
   budget: number | null,
+  preferences: string[],
 ): Activity[] {
+  const requiredPreferences = preferences.filter((preference) =>
+    HARD_FILTER_PREFERENCES.includes(preference),
+  )
+
   return activities.filter((activity) => {
     if (budget !== null && activity.price > budget) {
+      return false
+    }
+
+    if (
+      requiredPreferences.length > 0 &&
+      !requiredPreferences.some((preference) =>
+        activity.tags.includes(preference),
+      )
+    ) {
       return false
     }
 

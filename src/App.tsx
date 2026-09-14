@@ -75,6 +75,7 @@ function App() {
     const eligibleActivities = filterActivities(
       activities,
       parsedSearch.budget,
+      parsedSearch.preferences,
     )
 
     const rankedActivities = scoreActivities(
