@@ -10,6 +10,8 @@ import type {
   import { normalizeResults } from '../normalization'
   import { verifier } from '../verification'
   import { resultFilter } from '../filtering'
+  import { resultRanker } from '../ranking'
+  
   export async function retrieveResults(
     intent: QueryIntent,
     providers: ProviderRegistry,
@@ -38,21 +40,26 @@ import type {
       }
     }
   
+    const normalizedResults = normalizeResults(results)
+    const verifiedResults = verifier.verify(normalizedResults)
+    const filteredResults = resultFilter.filter(
+      verifiedResults,
+      intent,
+    )
+  
+    const rankedResults = resultRanker.rank(
+      filteredResults,
+      intent,
+    )
+  
     const error =
       results.length === 0 && errors.length > 0
         ? errors[0]
         : null
   
-        const normalizedResults = normalizeResults(results)
-const verifiedResults = verifier.verify(normalizedResults)
-const filteredResults = resultFilter.filter(
-  verifiedResults,
-  intent,
-)
-        
-        return {
-          success: results.length > 0 || errors.length === 0,
-          data: filteredResults,
+    return {
+      success: results.length > 0 || errors.length === 0,
+      data: rankedResults.map((item) => item.result),
       error,
       metadata: {
         provider: 'intelligence-retrieval',
