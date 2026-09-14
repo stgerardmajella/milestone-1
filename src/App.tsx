@@ -96,7 +96,7 @@ function App() {
         original_query: query,
         location: parsedSearch.location,
         budget: parsedSearch.budget,
-        date: null,
+        date: parsedSearch.date,
         people: parsedSearch.people,
         intent: parsedSearch.intent,
       })
