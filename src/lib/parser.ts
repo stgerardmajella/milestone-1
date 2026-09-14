@@ -78,17 +78,32 @@ function extractRelationship(
   return null
 }
 
-function extractDate(query: string): string | null {
-  const lowerQuery = query.toLowerCase()
-
-  for (const day of DAY_NAMES) {
-    if (lowerQuery.includes(day)) {
-      return day
-    }
+function formatDate(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+  
+    return `${year}-${month}-${day}`
   }
-
-  return null
-}
+  
+  function extractDate(query: string): string | null {
+    const lowerQuery = query.toLowerCase()
+    const today = new Date()
+  
+    for (let dayIndex = 0; dayIndex < DAY_NAMES.length; dayIndex += 1) {
+      if (lowerQuery.includes(DAY_NAMES[dayIndex])) {
+        const daysUntilTarget =
+          (dayIndex - today.getDay() + 7) % 7
+  
+        const targetDate = new Date(today)
+        targetDate.setDate(today.getDate() + daysUntilTarget)
+  
+        return formatDate(targetDate)
+      }
+    }
+  
+    return null
+  }
 
 function extractPreferences(query: string): string[] {
   const lowerQuery = query.toLowerCase()
