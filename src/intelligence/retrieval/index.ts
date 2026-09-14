@@ -1,4 +1,5 @@
 import type {
+    ProviderError,
     ProviderResult,
     QueryIntent,
     SearchResult,
@@ -13,20 +14,37 @@ import type {
   ): Promise<ProviderResult<SearchResult>> {
     const sources = selectSources(intent.category)
     const results: SearchResult[] = []
+    const errors: ProviderError[] = []
   
     for (const source of sources) {
       const provider = selectProvider(source, providers)
-      const response = await provider(intent)
   
-      if (response.success) {
-        results.push(...response.data)
+      try {
+        const response = await provider(intent)
+  
+        if (response.success) {
+          results.push(...response.data)
+        } else if (response.error) {
+          errors.push(response.error)
+        }
+      } catch {
+        errors.push({
+          code: 'PROVIDER_ERROR',
+          message: `${source} provider failed unexpectedly`,
+          retryable: false,
+        })
       }
     }
   
+    const error =
+      results.length === 0 && errors.length > 0
+        ? errors[0]
+        : null
+  
     return {
-      success: true,
+      success: results.length > 0 || errors.length === 0,
       data: results,
-      error: null,
+      error,
       metadata: {
         provider: 'intelligence-retrieval',
         requestId: null,
@@ -35,7 +53,7 @@ import type {
         usage: {
           inputUnits: null,
           outputUnits: null,
-          requests: 0,
+          requests: sources.length,
         },
         estimatedCostZar: null,
       },
