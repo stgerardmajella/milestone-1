@@ -243,7 +243,7 @@ button {
 .activity-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px 14px;
   margin-top: 20px;
 }
 
@@ -257,24 +257,7 @@ button {
 }
 
 .why-selected {
-  margin-top: 20px;.tag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 14px;
-  }
-  
-  .tag {
-    display: inline-block;
-    padding: 5px 9px;
-    border: 1px solid #deddd6;
-    border-radius: 999px;
-    background: #faf9f5;
-    color: #696f6b;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: lowercase;
-  }
+  margin-top: 20px;
   padding-top: 18px;
   border-top: 1px solid #ecebe6;
 }
@@ -431,21 +414,4 @@ button {
     gap: 28px;
   }
   
-}.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.tag {
-  display: inline-block;
-  padding: 5px 9px;
-  border: 1px solid #deddd6;
-  border-radius: 999px;
-  background: #faf9f5;
-  color: #696f6b;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: lowercase;
 }
