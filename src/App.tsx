@@ -11,6 +11,21 @@ import {
 } from './intelligence/geolocation'
 import type { Activity, RankedActivity } from './types/recommendation'
 
+function createSessionId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+    const randomValue = Math.random() * 16 | 0
+    const value = character === 'x'
+      ? randomValue
+      : (randomValue & 0x3) | 0x8
+
+    return value.toString(16)
+  })
+}
+
 function App() {
   const [query, setQuery] = useState('')
 const [results, setResults] = useState<RankedActivity[]>([])
@@ -167,7 +182,7 @@ function requestUserLocation() {
 
     setResults(topResults)
 
-    const sessionId = crypto.randomUUID()
+    const sessionId = createSessionId()
 
     const { error: sessionError } = await supabase
       .from('search_sessions')
@@ -218,7 +233,7 @@ function requestUserLocation() {
     <main className="app-shell">
       <section className="hero">
         <div className="hero-content">
-          <span className="eyebrow">MILESTONE 1</span>
+          <span className="eyebrow">Find iT</span>
 
           <h1>
             Find something
@@ -451,3 +466,5 @@ function requestUserLocation() {
 }
 
 export default App
+
+
