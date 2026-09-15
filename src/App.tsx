@@ -396,7 +396,7 @@ function requestUserLocation() {
       target="_blank"
       rel="noreferrer"
     >
-      Navigate
+      Directions
     </a>
   )}
 
