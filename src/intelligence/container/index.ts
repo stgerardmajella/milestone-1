@@ -5,7 +5,6 @@ import type {
   SearchProvider,
 } from '../contracts'
 
-import { OpenAIProvider } from '../providers/ai'
 import { TicketmasterEventProvider } from '../providers/events'
 import { BravePlaceProvider } from '../providers/places'
 import { TavilySearchProvider } from '../providers/search'
@@ -17,9 +16,15 @@ export type ProviderRegistry = {
   places: PlaceProvider
 }
 
-export function createProviderRegistry(): ProviderRegistry {
+export type ProviderRegistryDependencies = {
+  ai: AIProvider
+}
+
+export function createProviderRegistry(
+  dependencies: ProviderRegistryDependencies,
+): ProviderRegistry {
   return {
-    ai: new OpenAIProvider(),
+    ai: dependencies.ai,
     search: new TavilySearchProvider(),
     events: new TicketmasterEventProvider(),
     places: new BravePlaceProvider(),
