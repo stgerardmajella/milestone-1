@@ -256,6 +256,22 @@ button {
   font-weight: 700;
 }
 
+.directions-link {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 9px 13px;
+  border: 1px solid #d4d3cc;
+  border-radius: 9px;
+  color: #35634b;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.directions-link:hover {
+  text-decoration: underline;
+}
+
 .why-selected {
   margin-top: 20px;
   padding-top: 18px;

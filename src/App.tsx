@@ -385,7 +385,8 @@ function requestUserLocation() {
                     {result.activity.latitude !== null &&
   result.activity.longitude !== null && (
     <a
-      href={createNavigationUrl({
+  className="directions-link"
+  href={createNavigationUrl({
         latitude: result.activity.latitude,
         longitude: result.activity.longitude,
       })}
