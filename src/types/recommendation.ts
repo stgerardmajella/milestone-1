@@ -15,6 +15,8 @@ export type ParsedSearch = {
     category: string
     price: number
     location: string
+    latitude: number | null
+    longitude: number | null
     date: string | null
     start_time: string | null
     end_time: string | null

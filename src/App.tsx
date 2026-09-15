@@ -4,15 +4,90 @@ import { supabase } from './lib/supabase'
 import { parseSearchQuery } from './lib/parser'
 import { filterActivities } from './lib/filter'
 import { scoreActivities } from './lib/scoring'
+import {
+  calculateDistanceKm,
+  createNavigationUrl,
+  formatDistanceKm,
+} from './intelligence/geolocation'
 import type { Activity, RankedActivity } from './types/recommendation'
 
 function App() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<RankedActivity[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hasSearched, setHasSearched] = useState(false)
+const [results, setResults] = useState<RankedActivity[]>([])
+const [loading, setLoading] = useState(false)
+const [error, setError] = useState<string | null>(null)
+const [hasSearched, setHasSearched] = useState(false)
+const [userLocation, setUserLocation] = useState<{
+  latitude: number
+  longitude: number
+} | null>(null)
 
+const [locationLoading, setLocationLoading] = useState(false)
+const [locationError, setLocationError] = useState<string | null>(null)
+
+function getActivityDistance(result: RankedActivity): string | null {
+  if (
+    userLocation === null ||
+    result.activity.latitude === null ||
+    result.activity.longitude === null
+  ) {
+    return null
+  }
+
+  const distanceKm = calculateDistanceKm(
+    userLocation,
+    {
+      latitude: result.activity.latitude,
+      longitude: result.activity.longitude,
+    },
+  )
+
+  return formatDistanceKm(distanceKm)
+}
+
+function requestUserLocation() {
+  if (!navigator.geolocation) {
+    setLocationError('Location services are not available on this device.')
+    return
+  }
+
+  setLocationLoading(true)
+  setLocationError(null)
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setUserLocation({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      })
+
+      setLocationLoading(false)
+    },
+    (positionError) => {
+      let message = 'We could not determine your location.'
+
+      if (positionError.code === GeolocationPositionError.PERMISSION_DENIED) {
+        message = 'Location permission was denied. You can still use Find iT without it.'
+      } else if (
+        positionError.code === GeolocationPositionError.POSITION_UNAVAILABLE
+      ) {
+        message = 'Your location is currently unavailable.'
+      } else if (
+        positionError.code === GeolocationPositionError.TIMEOUT
+      ) {
+        message = 'Finding your location took too long. Please try again.'
+      }
+
+      setLocationError(message)
+      setLocationLoading(false)
+    },
+    {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 300000,
+    },
+  )
+}
   async function runRecommendation(event: FormEvent) {
     event.preventDefault()
 
@@ -25,25 +100,27 @@ function App() {
     setHasSearched(true)
 
     const { data, error: supabaseError } = await supabase
-      .from('activities')
-      .select(`
-        id,
-        name,
-        description,
-        category,
-        price,
-        location,
-        date,
-        start_time,
-        end_time,
-        image_url,
-        rating,
-        source_name,
-        source_url,
-        activity_tags (
-          tag
-        )
-      `)
+  .from('activities')
+  .select(`
+    id,
+    name,
+    description,
+    category,
+    price,
+    location,
+    latitude,
+    longitude,
+    date,
+    start_time,
+    end_time,
+    image_url,
+    rating,
+    source_name,
+    source_url,
+    activity_tags (
+      tag
+    )
+  `)
 
     if (supabaseError) {
       setError(supabaseError.message)
@@ -58,6 +135,8 @@ function App() {
       category: activity.category,
       price: activity.price,
       location: activity.location,
+      latitude: activity.latitude,
+      longitude: activity.longitude,
       date: activity.date,
       start_time: activity.start_time,
       end_time: activity.end_time,
@@ -199,15 +278,46 @@ function App() {
       {!loading && !error && hasSearched && (
         <section className="results-section">
           <div className="results-header">
-            <div>
-              <span className="eyebrow">YOUR RESULTS</span>
-              <h2>Recommended for you</h2>
-            </div>
+  <div>
+    <span className="eyebrow">YOUR RESULTS</span>
+    <h2>Recommended for you</h2>
+  </div>
 
-            <span className="result-count">
-              {results.length} matches
-            </span>
-          </div>
+  <div>
+    <span className="result-count">
+      {results.length} matches
+    </span>
+
+    {!userLocation && (
+      <button
+        type="button"
+        onClick={requestUserLocation}
+        disabled={locationLoading}
+      >
+        {locationLoading ? 'Finding you...' : 'Show distance'}
+      </button>
+    )}
+  </div>
+</div>
+
+{/* STEP 6 — Location status message */}
+{locationError && (
+  <div className="location-message">
+    <p>{locationError}</p>
+  </div>
+)}
+
+{userLocation && (
+  <div className="location-message">
+    <p>
+      Distance is calculated approximately from your current location.
+    </p>
+  </div>
+)}
+
+<div className="query-summary">
+  <span>â€œ{query}â€</span>
+</div>
 
           <div className="query-summary">
             <span>“{query}”</span>
@@ -249,18 +359,24 @@ function App() {
                     </p>
 
                     <div className="activity-meta">
-                      <span>
-                        R{result.activity.price}
-                      </span>
+  <span>
+    R{result.activity.price}
+  </span>
 
-                      <span>
-                        ★ {result.activity.rating ?? '—'}
-                      </span>
+  <span>
+  ★ {result.activity.rating ?? '—'}
+</span>
 
-                      <span>
-                        {result.activity.location}
-                      </span>
-                    </div>
+  <span>
+    {result.activity.location}
+  </span>
+
+  {getActivityDistance(result) && (
+    <span>
+      {getActivityDistance(result)} away
+    </span>
+  )}
+</div>
 
                     <div className="tag-list">
                       {result.activity.tags.map((tag) => (
@@ -269,6 +385,20 @@ function App() {
                         </span>
                       ))}
                     </div>
+
+                    {result.activity.latitude !== null &&
+  result.activity.longitude !== null && (
+    <a
+      href={createNavigationUrl({
+        latitude: result.activity.latitude,
+        longitude: result.activity.longitude,
+      })}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Navigate
+    </a>
+  )}
 
                     <div className="why-selected">
                       <strong>Why this was selected</strong>
