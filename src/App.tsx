@@ -316,10 +316,6 @@ function requestUserLocation() {
 )}
 
 <div className="query-summary">
-<span>“{query}”</span>
-</div>
-
-          <div className="query-summary">
             <span>“{query}”</span>
           </div>
 
