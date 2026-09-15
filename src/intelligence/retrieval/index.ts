@@ -1,6 +1,6 @@
 import type {
     ProviderError,
-    ProviderResult,
+    IntelligenceProviderStatus,
     QueryIntent,
     RankedSearchResult,
     SearchResult,
@@ -12,14 +12,16 @@ import type {
   import { verifier } from '../verification'
   import { resultFilter } from '../filtering'
   import { resultRanker } from '../ranking'
+  import type { RetrievalResponse } from './types'
   
   export async function retrieveResults(
     intent: QueryIntent,
     providers: ProviderRegistry,
-): Promise<ProviderResult<RankedSearchResult>> {
+  ): Promise<RetrievalResponse> {
     const sources = selectSources(intent.category)
     const results: SearchResult[] = []
     const errors: ProviderError[] = []
+    const providerStatuses: IntelligenceProviderStatus[] = []
   
     for (const source of sources) {
       const provider = selectProvider(source, providers)
@@ -29,50 +31,56 @@ import type {
   
         if (response.success) {
           results.push(...response.data)
+  
+          providerStatuses.push({
+            provider: source,
+            success: true,
+            resultCount: response.data.length,
+            error: null,
+          })
         } else if (response.error) {
           errors.push(response.error)
+  
+          providerStatuses.push({
+            provider: source,
+            success: false,
+            resultCount: 0,
+            error: response.error,
+          })
         }
       } catch {
-        errors.push({
+        const error: ProviderError = {
           code: 'PROVIDER_ERROR',
           message: `${source} provider failed unexpectedly`,
           retryable: false,
+        }
+  
+        errors.push(error)
+  
+        providerStatuses.push({
+          provider: source,
+          success: false,
+          resultCount: 0,
+          error,
         })
       }
     }
   
     const normalizedResults = normalizeResults(results)
     const verifiedResults = verifier.verify(normalizedResults)
+  
     const filteredResults = resultFilter.filter(
       verifiedResults,
       intent,
     )
   
-    const rankedResults = resultRanker.rank(
+    const rankedResults: RankedSearchResult[] = resultRanker.rank(
       filteredResults,
       intent,
     )
   
-    const error =
-      results.length === 0 && errors.length > 0
-        ? errors[0]
-        : null
-  
     return {
-      success: results.length > 0 || errors.length === 0,
-      data: rankedResults,
-      error,
-      metadata: {
-        provider: 'intelligence-retrieval',
-        requestId: null,
-        retrievedAt: new Date().toISOString(),
-        latencyMs: 0,
-        usage: {
-          inputUnits: null,
-          outputUnits: null,
-          requests: sources.length,
-        },
-        estimatedCostZar: null,
-      },
+      results: rankedResults,
+      providers: providerStatuses,
     }
   }

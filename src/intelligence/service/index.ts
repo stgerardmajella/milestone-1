@@ -43,15 +43,11 @@ export class IntelligenceService {
       this.providers,
     )
 
-    if (!retrieval.success && retrieval.error) {
-      throw new Error(retrieval.error.message)
-    }
-
     return {
-      results: retrieval.data,
+      results: retrieval.results,
       query,
       intent,
-      providers: [],
+      providers: retrieval.providers,
       cost: {
         estimatedZar: 0,
       },
