@@ -227,8 +227,8 @@ function requestUserLocation() {
           </h1>
 
           <p className="hero-description">
-            Tell us what you feel like doing, your budget,
-            who you’re with, or anything else that matters.
+          Tell us what you feel like doing, your budget,
+          who going with, or anything else that matters.
           </p>
 
           <form onSubmit={runRecommendation} className="search-form">
@@ -251,8 +251,8 @@ function requestUserLocation() {
             </div>
 
             <p className="example-query">
-              Try: “I have R300 and want something fun to do with
-              my girlfriend Saturday.”
+            Try: “I have R300 and want something fun to do with
+            my girlfriend Saturday.”
             </p>
           </form>
         </div>
@@ -316,7 +316,7 @@ function requestUserLocation() {
 )}
 
 <div className="query-summary">
-  <span>â€œ{query}â€</span>
+<span>“{query}”</span>
 </div>
 
           <div className="query-summary">
