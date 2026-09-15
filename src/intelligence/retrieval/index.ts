@@ -2,6 +2,7 @@ import type {
     ProviderError,
     ProviderResult,
     QueryIntent,
+    RankedSearchResult,
     SearchResult,
   } from '../contracts'
   import type { ProviderRegistry } from '../container'
@@ -15,7 +16,7 @@ import type {
   export async function retrieveResults(
     intent: QueryIntent,
     providers: ProviderRegistry,
-  ): Promise<ProviderResult<SearchResult>> {
+): Promise<ProviderResult<RankedSearchResult>> {
     const sources = selectSources(intent.category)
     const results: SearchResult[] = []
     const errors: ProviderError[] = []
@@ -59,7 +60,7 @@ import type {
   
     return {
       success: results.length > 0 || errors.length === 0,
-      data: rankedResults.map((item) => item.result),
+      data: rankedResults,
       error,
       metadata: {
         provider: 'intelligence-retrieval',
