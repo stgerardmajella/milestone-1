@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import './App.css'
 import { supabase } from './lib/supabase'
 import { parseSearchQuery } from './lib/parser'
 import { understandQuery } from './intelligence/client'
@@ -420,7 +421,7 @@ function requestUserLocation() {
 )}
 
 <div className="query-summary">
-            <span>ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ{query}ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â</span>
+            <span>{query}</span>
           </div>
 
           {results.length === 0 ? (
@@ -434,49 +435,71 @@ function requestUserLocation() {
             <div className="results-grid">
               {results.map((result) => (
                 <article
-                  key={result.activity.id}
-                  className="activity-card"
-                >
-                  <div className="card-top">
-                    <span className="rank">
-                      #{result.rank}
+                key={result.activity.id}
+                className="activity-card"
+              >
+                <div className="card-top">
+                  <span className="rank">
+                    #{result.rank}
+                  </span>
+                </div>
+
+                <div className="card-content">
+                  <span className="category">
+                    {result.activity.category}
+                  </span>
+
+                  {result.activity.image_url && (
+                    <img
+                      className="activity-image"
+                      src={result.activity.image_url}
+                      alt={result.activity.name}
+                    />
+                  )}
+
+                  <h3>{result.activity.name}</h3>
+
+                  <p className="description">
+                    {result.activity.description}
+                  </p>
+
+                  <div className="activity-meta">
+                    <span>
+                      R{result.activity.price}
                     </span>
 
-                    <span className="match-score">
-                      Match score {result.matchScore}
+                    <span>
+                      ★ {result.activity.rating ?? '—'}
                     </span>
+
+                    <span>
+                      {result.activity.location}
+                    </span>
+
+                    {getActivityDistance(result) && (
+                      <span>
+                        {getActivityDistance(result)} away
+                      </span>
+                    )}
                   </div>
 
-                  <div className="card-content">
-                    <span className="category">
-                      {result.activity.category}
-                    </span>
+                  {result.activity.latitude !== null &&
+                    result.activity.longitude !== null && (
+                      <a
+                        className="directions-link"
+                        href={createNavigationUrl({
+                          latitude: result.activity.latitude,
+                          longitude: result.activity.longitude,
+                        })}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Directions
+                      </a>
+                    )}
 
-                    <h3>{result.activity.name}</h3>
-
-                    <p className="description">
-                      {result.activity.description}
-                    </p>
-
-                    <div className="activity-meta">
-  <span>
-    R{result.activity.price}
-  </span>
-
-  <span>
-  ★ {result.activity.rating ?? '—'}
-  </span>
-
-  <span>
-    {result.activity.location}
-  </span>
-
-  {getActivityDistance(result) && (
-    <span>
-      {getActivityDistance(result)} away
-    </span>
-  )}
-</div>
+                  <div className="why-selected">
+                    <strong>Why this was selected</strong>
 
                     <div className="tag-list">
                       {result.activity.tags.map((tag) => (
@@ -485,28 +508,9 @@ function requestUserLocation() {
                         </span>
                       ))}
                     </div>
-
-                    {result.activity.latitude !== null &&
-  result.activity.longitude !== null && (
-    <a
-  className="directions-link"
-  href={createNavigationUrl({
-        latitude: result.activity.latitude,
-        longitude: result.activity.longitude,
-      })}
-      target="_blank"
-      rel="noreferrer"
-    >
-      Directions
-    </a>
-  )}
-
-                    <div className="why-selected">
-                      <strong>Why this was selected</strong>
-                      <p>{result.whySelected}.</p>
-                    </div>
                   </div>
-                </article>
+                </div>
+              </article>
               ))}
             </div>
           )}

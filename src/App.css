@@ -182,3 +182,12 @@
     border-right-color: var(--border);
   }
 }
+
+.activity-image {
+  width: 100%;
+  max-width: 320px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
