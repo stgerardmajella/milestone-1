@@ -12,7 +12,7 @@ import {
   formatDistanceKm,
 } from './intelligence/geolocation'
 
-import type { ProviderErrorCode, QueryIntent } from './intelligence/contracts'
+import type { QueryIntent } from './intelligence/contracts'
 import type {
   Activity,
   ParsedSearch,
@@ -34,19 +34,6 @@ function createSessionId(): string {
   })
 }
 
-const FALLBACK_PROVIDER_ERROR_CODES: ProviderErrorCode[] = [
-  'QUOTA_EXHAUSTED',
-  'RATE_LIMIT',
-  'TIMEOUT',
-  'NETWORK',
-  'PROVIDER_ERROR',
-]
-
-function canUseDeterministicFallback(
-  errorCode: ProviderErrorCode,
-): boolean {
-  return FALLBACK_PROVIDER_ERROR_CODES.includes(errorCode)
-}
 function queryIntentToParsedSearch(
   intent: QueryIntent,
   fallbackSearch: ParsedSearch,
@@ -228,18 +215,11 @@ function requestUserLocation() {
     if (!understanding.success) {
       const providerError = understanding.error
 
-      if (
-        !providerError ||
-        !canUseDeterministicFallback(providerError.code)
-      ) {
-        setError(
-          providerError?.message ?? 'Query understanding failed.',
-        )
-        setLoading(false)
-        return
-      }
-
-      parsedSearch = fallbackSearch
+      setError(
+        providerError?.message ?? 'Query understanding failed.',
+      )
+      setLoading(false)
+      return
     } else {
       const [intent] = understanding.data
 
