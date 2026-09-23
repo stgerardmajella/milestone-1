@@ -217,6 +217,30 @@ describe('understandQuery client', () => {
     expect(invoke).not.toHaveBeenCalled()
   })
 
+  it('preserves QUOTA_EXHAUSTED provider failures', async () => {
+    invoke.mockResolvedValue({
+      data: {
+        success: false,
+        data: [],
+        error: {
+          code: 'QUOTA_EXHAUSTED',
+          message: 'Quota exhausted',
+          retryable: false,
+        },
+        metadata: validMetadata,
+      },
+      error: null,
+    })
+
+    const result = await understandQuery('Find something to do')
+
+    expect(result.success).toBe(false)
+    expect(result.data).toEqual([])
+    expect(result.error?.code).toBe('QUOTA_EXHAUSTED')
+    expect(result.error?.message).toBe('Quota exhausted')
+    expect(result.error?.retryable).toBe(false)
+  })
+
   it('maps Edge Function failures to ProviderError', async () => {
     invoke.mockResolvedValue({
       data: null,
