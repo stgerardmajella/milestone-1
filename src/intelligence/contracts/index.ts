@@ -31,6 +31,7 @@ export type ProviderErrorCode =
   | 'AUTHENTICATION'
   | 'AUTHORIZATION'
   | 'RATE_LIMIT'
+  | 'QUOTA_EXHAUSTED'
   | 'TIMEOUT'
   | 'NETWORK'
   | 'INVALID_REQUEST'

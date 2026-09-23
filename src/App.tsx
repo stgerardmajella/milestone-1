@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from './lib/supabase'
 import { parseSearchQuery } from './lib/parser'
+import { understandQuery } from './intelligence/client'
 import { filterActivities } from './lib/filter'
 import { scoreActivities } from './lib/scoring'
 import {
@@ -9,7 +10,13 @@ import {
   createNavigationUrl,
   formatDistanceKm,
 } from './intelligence/geolocation'
-import type { Activity, RankedActivity } from './types/recommendation'
+
+import type { ProviderErrorCode, QueryIntent } from './intelligence/contracts'
+import type {
+  Activity,
+  ParsedSearch,
+  RankedActivity,
+} from './types/recommendation'
 
 function createSessionId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -24,6 +31,57 @@ function createSessionId(): string {
 
     return value.toString(16)
   })
+}
+
+const FALLBACK_PROVIDER_ERROR_CODES: ProviderErrorCode[] = [
+  'QUOTA_EXHAUSTED',
+  'RATE_LIMIT',
+  'TIMEOUT',
+  'NETWORK',
+  'PROVIDER_ERROR',
+]
+
+function canUseDeterministicFallback(
+  errorCode: ProviderErrorCode,
+): boolean {
+  return FALLBACK_PROVIDER_ERROR_CODES.includes(errorCode)
+}
+function queryIntentToParsedSearch(
+  intent: QueryIntent,
+  fallbackSearch: ParsedSearch,
+): ParsedSearch {
+  let relationship: ParsedSearch['relationship'] = null
+
+  if (
+    intent.audience === 'couple' ||
+    intent.preferences.includes('romantic')
+  ) {
+    relationship = 'couple'
+  } else if (intent.audience === 'family') {
+    relationship = 'family'
+  } else if (intent.audience === 'friends') {
+    relationship = 'friends'
+  }
+
+  const aiDate = intent.dateRange.from
+  const isIsoDate =
+    typeof aiDate === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(aiDate)
+
+  return {
+    intent: intent.intent,
+    location: intent.location,
+    budget: intent.budget.max,
+    people: intent.people,
+    date: isIsoDate ? aiDate : fallbackSearch.date,
+    relationship,
+    preferences: [
+      ...new Set([
+        ...intent.preferences,
+        ...intent.keywords,
+      ]),
+    ],
+  }
 }
 
 function App() {
@@ -162,9 +220,39 @@ function requestUserLocation() {
       tags: activity.activity_tags?.map((item) => item.tag) ?? [],
     })) as Activity[]
 
-    const parsedSearch = parseSearchQuery(query)
+    const fallbackSearch = parseSearchQuery(query)
+    const understanding = await understandQuery(query)
+    let parsedSearch: ParsedSearch
 
-  
+    if (!understanding.success) {
+      const providerError = understanding.error
+
+      if (
+        !providerError ||
+        !canUseDeterministicFallback(providerError.code)
+      ) {
+        setError(
+          providerError?.message ?? 'Query understanding failed.',
+        )
+        setLoading(false)
+        return
+      }
+
+      parsedSearch = fallbackSearch
+    } else {
+      const [intent] = understanding.data
+
+      if (!intent) {
+        setError('Query understanding succeeded but produced no intent.')
+        setLoading(false)
+        return
+      }
+
+      parsedSearch = queryIntentToParsedSearch(
+        intent,
+        fallbackSearch,
+      )
+    }
 
     const eligibleActivities = filterActivities(
       activities,
@@ -316,6 +404,7 @@ function requestUserLocation() {
 </div>
 
 {/* STEP 6 — Location status message */}
+
 {locationError && (
   <div className="location-message">
     <p>{locationError}</p>
@@ -331,7 +420,7 @@ function requestUserLocation() {
 )}
 
 <div className="query-summary">
-            <span>“{query}”</span>
+            <span>ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ{query}ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â</span>
           </div>
 
           {results.length === 0 ? (
@@ -376,7 +465,7 @@ function requestUserLocation() {
 
   <span>
   ★ {result.activity.rating ?? '—'}
-</span>
+  </span>
 
   <span>
     {result.activity.location}
@@ -466,5 +555,3 @@ function requestUserLocation() {
 }
 
 export default App
-
-

@@ -201,11 +201,69 @@ Deno.serve(async (req) => {
         providerBody,
       );
 
+      let providerMessage = "Provider request failed";
+      let providerCode: string | null = null;
+      let providerType: string | null = null;
+
+      try {
+        const parsedProviderBody = JSON.parse(providerBody);
+
+        if (
+          parsedProviderBody &&
+          typeof parsedProviderBody.error === "object" &&
+          parsedProviderBody.error !== null
+        ) {
+          if (typeof parsedProviderBody.error.message === "string") {
+            providerMessage = parsedProviderBody.error.message;
+          }
+
+          if (typeof parsedProviderBody.error.code === "string") {
+            providerCode = parsedProviderBody.error.code;
+          }
+
+          if (typeof parsedProviderBody.error.type === "string") {
+            providerType = parsedProviderBody.error.type;
+          }
+        }
+      } catch {
+        // Preserve the generic provider message when the upstream body is not JSON.
+      }
+
+      const isQuotaExhausted =
+        providerCode === "credit_balance_exhausted" ||
+        providerType === "insufficient_quota";
+
+      const errorCode = isQuotaExhausted
+        ? "QUOTA_EXHAUSTED"
+        : providerStatus === 429
+          ? "RATE_LIMIT"
+          : "PROVIDER_ERROR";
+
+      const retryable = errorCode === "RATE_LIMIT";
+
       return jsonResponse(
         {
-          error: "Provider request failed",
+          success: false,
+          data: [],
+          error: {
+            code: errorCode,
+            message: providerMessage,
+            retryable,
+          },
+          metadata: {
+            provider: "understand-query",
+            requestId: openAIResponse.headers.get("x-request-id"),
+            retrievedAt: new Date().toISOString(),
+            latencyMs: 0,
+            usage: {
+              inputUnits: null,
+              outputUnits: null,
+              requests: 1,
+            },
+            estimatedCostZar: null,
+          },
         },
-        502,
+        200,
       );
     }
 
