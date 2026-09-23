@@ -81,7 +81,14 @@ function isQueryIntent(value: unknown): value is QueryIntent {
     return false
   }
 
-  if (!isNullableFiniteNumber(intent.people)) {
+  if (
+    intent.people !== null &&
+    (
+      typeof intent.people !== 'number' ||
+      !Number.isInteger(intent.people) ||
+      intent.people < 0
+    )
+  ) {
     return false
   }
 
@@ -100,7 +107,8 @@ function isQueryIntent(value: unknown): value is QueryIntent {
   const budget = intent.budget as Record<string, unknown>
 
   if (
-    !isNullableFiniteNumber(budget.max) ||
+    (budget.max !== null &&
+      (!isFiniteNumber(budget.max) || budget.max < 0)) ||
     budget.currency !== 'ZAR'
   ) {
     return false

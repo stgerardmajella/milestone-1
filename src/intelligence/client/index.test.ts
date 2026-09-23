@@ -167,6 +167,45 @@ describe('understandQuery client', () => {
     expect(result.error?.code).toBe('INVALID_RESPONSE')
   })
 
+  it('rejects negative people values', async () => {
+    invoke.mockResolvedValue({
+      data: {
+        intent: {
+          ...validIntent,
+          people: -1,
+        },
+      },
+      error: null,
+    })
+
+    const result = await understandQuery('Find something to do')
+
+    expect(result.success).toBe(false)
+    expect(result.data).toEqual([])
+    expect(result.error?.code).toBe('INVALID_RESPONSE')
+  })
+
+  it('rejects negative budget max values', async () => {
+    invoke.mockResolvedValue({
+      data: {
+        intent: {
+          ...validIntent,
+          budget: {
+            max: -1,
+            currency: 'ZAR',
+          },
+        },
+      },
+      error: null,
+    })
+
+    const result = await understandQuery('Find something to do')
+
+    expect(result.success).toBe(false)
+    expect(result.data).toEqual([])
+    expect(result.error?.code).toBe('INVALID_RESPONSE')
+  })
+
   it('rejects an empty query without invoking the Edge Function', async () => {
     const result = await understandQuery('   ')
 
