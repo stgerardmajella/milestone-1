@@ -1,9 +1,9 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
 import { supabase } from './lib/supabase'
 import { parseSearchQuery } from './lib/parser'
-import { understandQuery } from './intelligence/client'
+import { understandQueryLocally } from './intelligence/client'
 import { filterActivities } from './lib/filter'
 import { scoreActivities } from './lib/scoring'
 import {
@@ -222,7 +222,7 @@ function requestUserLocation() {
     })) as Activity[]
 
     const fallbackSearch = parseSearchQuery(query)
-    const understanding = await understandQuery(query)
+    const understanding = await understandQueryLocally(query)
     let parsedSearch: ParsedSearch
 
     if (!understanding.success) {
@@ -313,52 +313,102 @@ function requestUserLocation() {
 
   return (
     <main className="app-shell">
-      <section className="hero">
-        <div className="hero-content">
-          <span className="eyebrow">Find iT</span>
+      <header className="site-header">
+        <div className="header-inner">
+        <div className="brand" aria-label="Find iT">
+  <svg
+    className="brand-mark"
+    viewBox="0 0 32 32"
+    aria-hidden="true"
+  >
+    <path
+      d="M16 2.5C9.1 2.5 3.5 8 3.5 14.8c0 8.2 8.1 12.7 11.5 14.7.6.3 1.3.3 1.9 0 4.4-2 11.5-6.5 11.5-14.7C28.5 8 22.9 2.5 16 2.5Z"
+      fill="currentColor"
+    />
+    <circle
+      cx="16"
+      cy="14"
+      r="4.2"
+      fill="white"
+    />
+  </svg>
 
-          <h1>
-            Find something
-            <br />
-            worth doing.
-          </h1>
+  <span className="brand-name">
+    Find <strong>iT</strong>
+  </span>
+</div>
 
-          <p className="hero-description">
-          Tell us what you feel like doing, your budget,
-          who going with, or anything else that matters.
-          </p>
+          <form onSubmit={runRecommendation} className="header-search-form">
+            <div className="header-search">
+              <span className="search-icon" aria-hidden="true">⌕</span>
 
-          <form onSubmit={runRecommendation} className="search-form">
-            <div className="search-box">
               <input
                 id="search"
                 type="text"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="What would you like to do?"
-                aria-label="What would you like to do?"
+                placeholder="Search for activities, places, events..."
+                aria-label="Search for activities, places, events"
               />
 
               <button
                 type="submit"
+                className="header-search-button"
                 disabled={loading || !query.trim()}
+                aria-label={loading ? 'Searching' : 'Search'}
               >
-                {loading ? 'Researching...' : 'Find activities'}
+                {loading ? '...' : 'Search'}
               </button>
             </div>
-
-            <p className="example-query">
-            Try: “I have R300 and want something fun to do with
-            my girlfriend Saturday.”
-            </p>
           </form>
+
+          <button
+            type="button"
+            className="location-selector"
+            onClick={requestUserLocation}
+            disabled={locationLoading}
+          >
+            <span className="location-pin" aria-hidden="true">⌖</span>
+            <span>{locationLoading ? 'Finding you...' : 'Cape Town'}</span>
+            <span className="location-chevron" aria-hidden="true">⌄</span>
+          </button>
+
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label="Open menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
-      </section>
+      </header>
+
+      <nav className="category-nav" aria-label="Search categories">
+        <div className="category-nav-inner">
+          <button type="button" className="category-pill active">
+            All
+          </button>
+          <button type="button" className="category-pill">
+            Events
+          </button>
+          <button type="button" className="category-pill">
+            Activities
+          </button>
+          <button type="button" className="category-pill">
+            Places
+          </button>
+          <button type="button" className="category-pill">
+            Web
+          </button>
+        </div>
+      </nav>
 
       {loading && (
         <section className="status-section">
           <div className="loader" />
-          <h2>Researching activities...</h2>
+          <h2>Finding something for you...</h2>
           <p>
             Understanding your request and finding the best matches.
           </p>
@@ -374,46 +424,45 @@ function requestUserLocation() {
 
       {!loading && !error && hasSearched && (
         <section className="results-section">
-          <div className="results-header">
-  <div>
-    <span className="eyebrow">YOUR RESULTS</span>
-    <h2>Recommended for you</h2>
-  </div>
+          <div className="results-toolbar">
+            <div>
+              <span className="results-kicker">DISCOVER</span>
+              <h1>Find something worth doing.</h1>
+            </div>
 
-  <div>
-    <span className="result-count">
-      {results.length} matches
-    </span>
+            <div className="results-toolbar-right">
+              <span className="result-count">
+                {results.length} {results.length === 1 ? 'match' : 'matches'}
+              </span>
 
-    {!userLocation && (
-      <button
-        type="button"
-        onClick={requestUserLocation}
-        disabled={locationLoading}
-      >
-        {locationLoading ? 'Finding you...' : 'Show distance'}
-      </button>
-    )}
-  </div>
-</div>
+              {!userLocation && (
+                <button
+                  type="button"
+                  className="distance-button"
+                  onClick={requestUserLocation}
+                  disabled={locationLoading}
+                >
+                  {locationLoading ? 'Finding you...' : 'Show distance'}
+                </button>
+              )}
+            </div>
+          </div>
 
-{/* STEP 6 — Location status message */}
+          {locationError && (
+            <div className="location-message">
+              <p>{locationError}</p>
+            </div>
+          )}
 
-{locationError && (
-  <div className="location-message">
-    <p>{locationError}</p>
-  </div>
-)}
+          {userLocation && (
+            <div className="location-message">
+              <p>
+                Distance is calculated approximately from your current location.
+              </p>
+            </div>
+          )}
 
-{userLocation && (
-  <div className="location-message">
-    <p>
-      Distance is calculated approximately from your current location.
-    </p>
-  </div>
-)}
-
-<div className="query-summary">
+          <div className="query-summary">
             <span>{query}</span>
           </div>
 
@@ -426,127 +475,102 @@ function requestUserLocation() {
             </div>
           ) : (
             <div className="results-grid">
-              {results.map((result) => (
-                <article
-                key={result.activity.id}
-                className="activity-card"
-              >
-                <div className="card-top">
-                  <span className="rank">
-                    #{result.rank}
-                  </span>
-                </div>
+              {results.map((result) => {
+                const primaryTag = result.activity.tags?.[0] ?? result.activity.category;
+                const distance = getActivityDistance(result);
 
-                <div className="card-content">
-                  <span className="category">
-                    {result.activity.category}
-                  </span>
-
-                  {result.activity.image_url && (
-                    <img
-                      className="activity-image"
-                      src={result.activity.image_url}
-                      alt={result.activity.name}
-                    />
-                  )}
-
-                  <h3>{result.activity.name}</h3>
-
-                  <p className="description">
-                    {result.activity.description}
-                  </p>
-
-                  <div className="activity-meta">
-                    <span>
-                      R{result.activity.price}
-                    </span>
-
-                    <span>
-                      ★ {result.activity.rating ?? '—'}
-                    </span>
-
-                    <span>
-                      {result.activity.location}
-                    </span>
-
-                    {getActivityDistance(result) && (
-                      <span>
-                        {getActivityDistance(result)} away
-                      </span>
-                    )}
-                  </div>
-
-                  {result.activity.latitude !== null &&
-                    result.activity.longitude !== null && (
-                      <a
-                        className="directions-link"
-                        href={createNavigationUrl({
-                          latitude: result.activity.latitude,
-                          longitude: result.activity.longitude,
-                        })}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Directions
-                      </a>
+                return (
+                  <article
+                    key={result.activity.id}
+                    className="activity-card"
+                  >
+                    {result.activity.image_url ? (
+                      <div className="activity-image-wrap">
+                        <img
+                          className="activity-image"
+                          src={result.activity.image_url}
+                          alt={result.activity.name}
+                        />
+                      </div>
+                    ) : (
+                      <div className="activity-image-wrap activity-image-placeholder">
+                        <span>Find iT</span>
+                      </div>
                     )}
 
-                  <div className="why-selected">
-                    <strong>Why this was selected</strong>
+                    <div className="card-content">
+                      <h2>{result.activity.name}</h2>
 
-                    <div className="tag-list">
-                      {result.activity.tags.map((tag) => (
-                        <span key={tag} className="tag">
-                          {tag}
+                      <div className="activity-meta">
+                        <span className="meta-item">
+                          <span className="meta-icon" aria-hidden="true">⌑</span>
+                          R{result.activity.price}
                         </span>
-                      ))}
+
+                        <span className="meta-item">
+                          <span className="meta-icon" aria-hidden="true">♟</span>
+                          {result.activity.category}
+                        </span>
+
+                        {distance && (
+                          <span className="meta-item">
+                            {distance} away
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="description">
+                        {result.activity.description}
+                      </p>
+
+                      <div className="card-footer">
+                        <div className="tag-list">
+                          <span className="tag">
+                            <span aria-hidden="true">✦</span>
+                            {primaryTag}
+                          </span>
+                        </div>
+
+                        {result.activity.latitude !== null &&
+                          result.activity.longitude !== null && (
+                            <a
+                              className="directions-link"
+                              href={createNavigationUrl({
+                                latitude: result.activity.latitude,
+                                longitude: result.activity.longitude,
+                              })}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Directions
+                            </a>
+                          )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
       )}
 
       {!hasSearched && !loading && (
-        <section className="intro-section">
-          <div>
-            <span className="eyebrow">HOW IT WORKS</span>
-            <h2>Simple in. Smart out.</h2>
-          </div>
-
-          <div className="steps">
-            <div className="step">
-              <span>01</span>
-              <h3>Tell us what you want</h3>
-              <p>
-                Describe your plans naturally, just like you would
-                to a person.
-              </p>
-            </div>
-
-            <div className="step">
-              <span>02</span>
-              <h3>We understand it</h3>
-              <p>
-                Your request is converted into useful criteria such
-                as budget, people and preferences.
-              </p>
-            </div>
-
-            <div className="step">
-              <span>03</span>
-              <h3>Get your best matches</h3>
-              <p>
-                Activities are filtered, scored and ranked to give
-                you the strongest matches.
-              </p>
-            </div>
+        <section className="welcome-section">
+          <div className="welcome-content">
+            <span className="results-kicker">DISCOVER</span>
+            <h1>Discover. Explore. Find iT.</h1>
+            <p>
+              Tell us what you feel like doing, where you want to go,
+              your budget, who you are with, or anything else that matters.
+            </p>
           </div>
         </section>
       )}
+
+      <footer className="site-footer">
+        <span>Discover. Explore. Find <strong>iT.</strong></span>
+      </footer>
     </main>
   )
 }

@@ -1,4 +1,5 @@
-﻿import { supabase } from '../../lib/supabase'
+import { LocalAIProvider } from '../providers/ai/local'
+import { supabase } from '../../lib/supabase'
 import type {
   AIProvider,
   ProviderError,
@@ -427,4 +428,10 @@ export async function understandQuery(
   query: string,
 ): Promise<ProviderResult<QueryIntent>> {
   return new SupabaseAIProvider().understandQuery(query)
+}
+
+export async function understandQueryLocally(
+  query: string,
+): Promise<ProviderResult<QueryIntent>> {
+  return new LocalAIProvider().understandQuery(query)
 }
