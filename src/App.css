@@ -179,6 +179,272 @@
   color: #fff;
 }
 
+/* Find iT filters */
+.filters-section {
+  margin-top: 1.25rem;
+}
+
+.filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filters-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  background: #fff;
+  color: #222;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.filters-toggle:hover,
+.filters-toggle.active {
+  background: #f5f5f5;
+  border-color: #bdbdbd;
+}
+
+.filters-toggle:active {
+  transform: translateY(1px);
+}
+
+.filters-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.filters-applied-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.filters-clear-inline {
+  border: 0;
+  background: transparent;
+  color: #555;
+  padding: 0.4rem 0;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filters-clear-inline:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+.filter-panel {
+  margin-top: 0.9rem;
+  padding: 1.25rem;
+  border: 1px solid #e4e4e4;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.filter-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.filter-panel-header h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+}
+
+.filter-selection-summary {
+  flex-shrink: 0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.filter-group {
+  margin-top: 1.25rem;
+}
+
+.filter-group:first-of-type {
+  margin-top: 0;
+}
+
+.filter-group h3 {
+  margin: 0 0 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.filter-chip {
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  background: #fff;
+  color: #333;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.filter-chip:hover {
+  border-color: #aaa;
+}
+
+.filter-chip.selected {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.price-filter-group {
+  max-width: 600px;
+}
+
+.price-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.price-filter-heading h3 {
+  margin: 0;
+}
+
+.price-filter-heading strong {
+  font-size: 0.95rem;
+}
+
+.price-range {
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.price-range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  color: #777;
+  font-size: 0.8rem;
+}
+
+.free-filter-button {
+  margin-top: 0.7rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  background: #fff;
+  color: #333;
+  padding: 0.5rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.free-filter-button:hover {
+  border-color: #aaa;
+}
+
+.free-filter-button.selected {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.filter-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.filter-clear-button,
+.filter-apply-button {
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-clear-button {
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  color: #333;
+}
+
+.filter-apply-button {
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+}
+
+.filter-clear-button:hover {
+  border-color: #aaa;
+}
+
+.filter-apply-button:hover {
+  background: #2a2a2a;
+}
+
+@media (max-width: 640px) {
+  .filter-panel {
+    padding: 1rem;
+  }
+
+  .filter-panel-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .price-filter-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .filter-panel-actions {
+    justify-content: stretch;
+  }
+
+  .filter-clear-button,
+  .filter-apply-button {
+    flex: 1;
+  }
+}
+
 /* Results */
 
 .results-section {

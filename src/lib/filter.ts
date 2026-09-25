@@ -1,9 +1,13 @@
 import type { Activity } from '../types/recommendation'
 
 const HARD_FILTER_PREFERENCES = [
+  'romantic',
+  'fun',
+  'outdoor',
+  'family',
+  'adventure',
   'food',
   'music',
-  'adventure',
 ]
 
 export function filterActivities(
