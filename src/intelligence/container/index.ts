@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   AIProvider,
   EventProvider,
   PlaceProvider,
@@ -26,7 +26,9 @@ export function createProviderRegistry(
   return {
     ai: dependencies.ai,
     search: new TavilySearchProvider(),
-    events: new TicketmasterEventProvider(),
+    events: new TicketmasterEventProvider({
+      apiKey: import.meta.env.VITE_TICKETMASTER_API_KEY ?? '',
+    }),
     places: new BravePlaceProvider(),
   }
 }

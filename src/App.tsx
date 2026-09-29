@@ -1,9 +1,11 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
 import { supabase } from './lib/supabase'
 import { parseSearchQuery } from './lib/parser'
 import { understandQueryLocally } from './intelligence/client'
+import { createProviderRegistry } from './intelligence/container'
+import { IntelligenceService } from './intelligence/service'
 import { filterActivities } from './lib/filter'
 import { scoreActivities } from './lib/scoring'
 import {
@@ -12,7 +14,10 @@ import {
   formatDistanceKm,
 } from './intelligence/geolocation'
 
-import type { QueryIntent } from './intelligence/contracts'
+import type {
+  QueryIntent,
+  RankedSearchResult,
+} from './intelligence/contracts'
 import type {
   Activity,
   ParsedSearch,
@@ -95,6 +100,14 @@ const FILTER_PREFERENCE_MAP: Record<string, string> = {
   'Live music': 'music',
 }
 
+const intelligenceService = new IntelligenceService(
+  createProviderRegistry({
+    ai: {
+      understandQuery: understandQueryLocally,
+    },
+  }),
+)
+
 function App() {
   const [query, setQuery] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -104,6 +117,7 @@ function App() {
 
   const [baseResults, setBaseResults] = useState<RankedActivity[]>([])
   const [results, setResults] = useState<RankedActivity[]>([])
+  const [eventResults, setEventResults] = useState<RankedSearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
@@ -252,28 +266,69 @@ function requestUserLocation() {
     setError(null)
     setHasSearched(true)
 
+    const fallbackSearch = parseSearchQuery(query)
+    const understanding = await understandQueryLocally(query)
+if (!understanding.success) {
+      const providerError = understanding.error
+
+      setError(
+        providerError?.message ?? 'Query understanding failed.',
+      )
+      setLoading(false)
+      return
+    }
+
+    const [intent] = understanding.data
+if (!intent) {
+      setError('Query understanding succeeded but produced no intent.')
+      setLoading(false)
+      return
+    }
+
+    if (intent.category === 'events') {
+      try {
+        const intelligenceResponse =
+          await intelligenceService.orchestrate(query)
+setEventResults(intelligenceResponse.results)
+        setBaseResults([])
+        setResults([])
+        setLoading(false)
+        return
+      } catch (serviceError) {
+        setError(
+          serviceError instanceof Error
+            ? serviceError.message
+            : 'Event search failed.',
+        )
+        setLoading(false)
+        return
+      }
+    }
+
+    setEventResults([])
+
     const { data, error: supabaseError } = await supabase
-  .from('activities')
-  .select(`
-    id,
-    name,
-    description,
-    category,
-    price,
-    location,
-    latitude,
-    longitude,
-    date,
-    start_time,
-    end_time,
-    image_url,
-    rating,
-    source_name,
-    source_url,
-    activity_tags (
-      tag
-    )
-  `)
+      .from('activities')
+      .select(`
+        id,
+        name,
+        description,
+        category,
+        price,
+        location,
+        latitude,
+        longitude,
+        date,
+        start_time,
+        end_time,
+        image_url,
+        rating,
+        source_name,
+        source_url,
+        activity_tags (
+          tag
+        )
+      `)
 
     if (supabaseError) {
       setError(supabaseError.message)
@@ -300,33 +355,10 @@ function requestUserLocation() {
       tags: activity.activity_tags?.map((item) => item.tag) ?? [],
     })) as Activity[]
 
-    const fallbackSearch = parseSearchQuery(query)
-    const understanding = await understandQueryLocally(query)
-    let parsedSearch: ParsedSearch
-
-    if (!understanding.success) {
-      const providerError = understanding.error
-
-      setError(
-        providerError?.message ?? 'Query understanding failed.',
-      )
-      setLoading(false)
-      return
-    } else {
-      const [intent] = understanding.data
-
-      if (!intent) {
-        setError('Query understanding succeeded but produced no intent.')
-        setLoading(false)
-        return
-      }
-
-      parsedSearch = queryIntentToParsedSearch(
-        intent,
-        fallbackSearch,
-      )
-    }
-
+    const parsedSearch = queryIntentToParsedSearch(
+      intent,
+      fallbackSearch,
+    )
     const eligibleActivities = filterActivities(
       activities,
       parsedSearch.budget,
@@ -420,7 +452,7 @@ function requestUserLocation() {
 
           <form onSubmit={runRecommendation} className="header-search-form">
             <div className="header-search">
-              <span className="search-icon" aria-hidden="true">⌕</span>
+              <span className="search-icon" aria-hidden="true">?</span>
 
               <input
                 id="search"
@@ -448,9 +480,9 @@ function requestUserLocation() {
             onClick={requestUserLocation}
             disabled={locationLoading}
           >
-            <span className="location-pin" aria-hidden="true">⌖</span>
+            <span className="location-pin" aria-hidden="true">?</span>
             <span>{locationLoading ? 'Finding you...' : 'Cape Town'}</span>
-            <span className="location-chevron" aria-hidden="true">⌄</span>
+            <span className="location-chevron" aria-hidden="true">?</span>
           </button>
 
           <button
@@ -511,9 +543,11 @@ function requestUserLocation() {
             </div>
 
             <div className="results-toolbar-right">
-              <span className="result-count">
-                {results.length} {results.length === 1 ? 'match' : 'matches'}
-              </span>
+            <span className="result-count">
+              {eventResults.length > 0
+                ? `${eventResults.length} ${eventResults.length === 1 ? 'event' : 'events'}`
+                : `${results.length} ${results.length === 1 ? 'match' : 'matches'}`}
+            </span>
 
               {!userLocation && (
                 <button
@@ -670,16 +704,88 @@ function requestUserLocation() {
             <span>{query}</span>
           </div>
 
-          {results.length === 0 ? (
-            <div className="empty-state">
-              <h3>No activities found</h3>
-              <p>
-                Try increasing your budget or changing your request.
-              </p>
+          {eventResults.length > 0 ? (
+  <div className="results-grid">
+    {eventResults.map((result) => (
+      <article
+        key={result.result.id}
+        className="activity-card"
+      >
+        {result.result.image ? (
+          <div className="activity-image-wrap">
+            <img
+              className="activity-image"
+              src={result.result.image}
+              alt={result.result.title}
+            />
+          </div>
+        ) : (
+          <div className="activity-image-wrap activity-image-placeholder">
+            <span>Find iT</span>
+          </div>
+        )}
+
+        <div className="card-content">
+          <h2>{result.result.title}</h2>
+
+          <div className="activity-meta">
+            <span className="meta-item">
+              <span className="meta-icon" aria-hidden="true"></span>
+              {result.result.type}
+            </span>
+
+            {result.result.date && (
+              <span className="meta-item">
+                {result.result.date}
+              </span>
+            )}
+
+            {result.result.location?.name && (
+              <span className="meta-item">
+                {result.result.location.name}
+              </span>
+            )}
+          </div>
+
+          {result.result.description && (
+            <p className="description">
+              {result.result.description}
+            </p>
+          )}
+
+          <div className="card-footer">
+            <div className="tag-list">
+              <span className="tag">
+                <span aria-hidden="true"></span>
+                Event
+              </span>
             </div>
-          ) : (
-            <div className="results-grid">
-              {results.map((result) => {
+
+            {result.result.url && (
+              <a
+                className="directions-link"
+                href={result.result.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View event
+              </a>
+            )}
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+) : results.length === 0 ? (
+  <div className="empty-state">
+    <h3>No results found</h3>
+    <p>
+      Try changing your request or search terms.
+    </p>
+  </div>
+) : (
+  <div className="results-grid">
+    {results.map((result) => {
                 const primaryTag = result.activity.tags?.[0] ?? result.activity.category;
                 const distance = getActivityDistance(result);
 

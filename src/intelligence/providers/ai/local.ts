@@ -21,6 +21,31 @@ function createMetadata(startedAt: number): ProviderMetadata {
   }
 }
 
+function detectQueryCategory(
+  query: string,
+): QueryIntent['category'] {
+  const lowerQuery = query.toLowerCase()
+
+  const eventTerms = [
+    'event',
+    'events',
+    'concert',
+    'concerts',
+    'festival',
+    'festivals',
+    'gig',
+    'gigs',
+    'show',
+    'shows',
+  ]
+
+  if (eventTerms.some((term) => lowerQuery.includes(term))) {
+    return 'events'
+  }
+
+  return 'activities'
+}
+
 export class LocalAIProvider implements AIProvider {
   async understandQuery(
     query: string,
@@ -45,7 +70,7 @@ export class LocalAIProvider implements AIProvider {
       const parsed = parseSearchQuery(trimmedQuery)
 
       const intent: QueryIntent = {
-        category: 'activities',
+        category: detectQueryCategory(trimmedQuery),
         intent: parsed.intent,
         location: parsed.location,
         dateRange: {
