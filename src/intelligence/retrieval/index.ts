@@ -9,6 +9,7 @@ import type {
   import { selectSources } from '../source-selection'
   import { selectProvider } from '../provider-selection'
   import { normalizeResults } from '../normalization'
+  import { deduplicateResults } from '../deduplication'
   import { verifier } from '../verification'
   import { resultFilter } from '../filtering'
   import { resultRanker } from '../ranking'
@@ -67,7 +68,8 @@ import type {
     }
   
     const normalizedResults = normalizeResults(results)
-    const verifiedResults = verifier.verify(normalizedResults)
+    const deduplicatedResults = deduplicateResults(normalizedResults)
+    const verifiedResults = verifier.verify(deduplicatedResults)
   
     const filteredResults = resultFilter.filter(
       verifiedResults,
