@@ -95,31 +95,121 @@ function extractRelationship(
 }
 
 function formatDate(date: Date): string {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-  
-    return `${year}-${month}-${day}`
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function startOfDay(date: Date): Date {
+  const result = new Date(date)
+  result.setHours(0, 0, 0, 0)
+  return result
+}
+
+function endOfMonth(year: number, monthIndex: number): Date {
+  return new Date(year, monthIndex + 1, 0)
+}
+
+function extractDateRange(query: string): {
+  date: string | null
+  dateFrom: string | null
+  dateTo: string | null
+} {
+  const lowerQuery = query.toLowerCase()
+  const today = startOfDay(new Date())
+
+  if (lowerQuery.includes('this weekend')) {
+    const daysUntilSaturday = (6 - today.getDay() + 7) % 7
+    const saturday = new Date(today)
+    saturday.setDate(today.getDate() + daysUntilSaturday)
+
+    const sunday = new Date(saturday)
+    sunday.setDate(saturday.getDate() + 1)
+
+    return {
+      date: null,
+      dateFrom: formatDate(saturday),
+      dateTo: formatDate(sunday),
+    }
   }
-  
-  function extractDate(query: string): string | null {
-    const lowerQuery = query.toLowerCase()
-    const today = new Date()
-  
-    for (let dayIndex = 0; dayIndex < DAY_NAMES.length; dayIndex += 1) {
-      if (lowerQuery.includes(DAY_NAMES[dayIndex])) {
-        const daysUntilTarget =
-          (dayIndex - today.getDay() + 7) % 7
-  
-        const targetDate = new Date(today)
-        targetDate.setDate(today.getDate() + daysUntilTarget)
-  
-        return formatDate(targetDate)
+
+  if (lowerQuery.includes('next weekend')) {
+    const daysUntilSaturday = (6 - today.getDay() + 7) % 7
+    const saturday = new Date(today)
+    saturday.setDate(
+      today.getDate() + daysUntilSaturday + 7,
+    )
+
+    const sunday = new Date(saturday)
+    sunday.setDate(saturday.getDate() + 1)
+
+    return {
+      date: null,
+      dateFrom: formatDate(saturday),
+      dateTo: formatDate(sunday),
+    }
+  }
+
+  const monthNames = [
+    'january',
+    'february',
+    'march',
+    'april',
+    'may',
+    'june',
+    'july',
+    'august',
+    'september',
+    'october',
+    'november',
+    'december',
+  ]
+
+  for (let monthIndex = 0; monthIndex < monthNames.length; monthIndex += 1) {
+    if (lowerQuery.includes(`in ${monthNames[monthIndex]}`)) {
+      let year = today.getFullYear()
+
+      if (monthIndex < today.getMonth()) {
+        year += 1
+      }
+
+      const firstDay = new Date(year, monthIndex, 1)
+      const lastDay = endOfMonth(year, monthIndex)
+
+      return {
+        date: null,
+        dateFrom: formatDate(firstDay),
+        dateTo: formatDate(lastDay),
       }
     }
-  
-    return null
   }
+
+  for (let dayIndex = 0; dayIndex < DAY_NAMES.length; dayIndex += 1) {
+    if (lowerQuery.includes(DAY_NAMES[dayIndex])) {
+      const daysUntilTarget =
+        (dayIndex - today.getDay() + 7) % 7
+
+      const targetDate = new Date(today)
+      targetDate.setDate(today.getDate() + daysUntilTarget)
+
+      const formattedDate = formatDate(targetDate)
+
+      return {
+        date: formattedDate,
+        dateFrom: formattedDate,
+        dateTo: formattedDate,
+      }
+    }
+  }
+
+  return {
+    date: null,
+    dateFrom: null,
+    dateTo: null,
+  }
+}
 
 function extractPreferences(query: string): string[] {
   const lowerQuery = query.toLowerCase()
@@ -147,13 +237,13 @@ function extractPreferences(query: string): string[] {
 }
 
 export function parseSearchQuery(query: string): ParsedSearch {
-    return {
-      intent: 'activity',
-      location: extractLocation(query),
+  return {
+    intent: 'activity',
+    location: extractLocation(query),
     budget: extractBudget(query),
     people: extractPeople(query),
-    date: extractDate(query),
     relationship: extractRelationship(query),
     preferences: extractPreferences(query),
+    ...extractDateRange(query),
   }
 }

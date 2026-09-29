@@ -4,6 +4,8 @@ export type ParsedSearch = {
     budget: number | null
     people: number | null
     date: string | null
+    dateFrom?: string | null
+    dateTo?: string | null
     relationship: 'couple' | 'family' | 'friends' | null
     preferences: string[]
   }

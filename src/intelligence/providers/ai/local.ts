@@ -74,8 +74,8 @@ export class LocalAIProvider implements AIProvider {
         intent: parsed.intent,
         location: parsed.location,
         dateRange: {
-          from: parsed.date,
-          to: parsed.date,
+          from: parsed.dateFrom ?? parsed.date,
+          to: parsed.dateTo ?? parsed.date,
         },
         timeRange: {
           from: null,
