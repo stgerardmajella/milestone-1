@@ -90,16 +90,20 @@ export interface LocationIntent {
 }
 
 export interface DateIntent {
-  value?: string;
-  end?: string;
-  relative?: string;
-}
+    value?: string
+    end?: string
+    relative?: string
+    isRange?: boolean
+  }
 
-export interface TimeIntent {
-  value?: string;
-  end?: string;
-  period?: "morning" | "afternoon" | "evening" | "night";
-}
+  export interface TimeIntent {
+    value?: string;
+    end?: string;
+    period?: "morning" | "afternoon" | "evening" | "night";
+    periods?: Array<
+      "morning" | "afternoon" | "evening" | "night"
+    >;
+  }
 
 export interface BudgetIntent {
   min?: number;
